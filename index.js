@@ -11,7 +11,7 @@ app.use(
       "https://task-manager-f93cc.web.app", 
       "http://localhost:5173", 
     ],
-    methods: ['GET', 'POST', 'PUT', 'DELETE']
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH']
   })
 );
 
