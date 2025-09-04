@@ -10,16 +10,12 @@ app.use(
     origin: [
       "https://task-manager-f93cc.web.app", 
       "http://localhost:5173", 
-      'https://toolkit-backend-c3ua.onrender.com',
-      'https://server-nu-roan.vercel.app'
     ],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH']
   })
 );
 
  
-
-
 
 
 require("dotenv").config();
