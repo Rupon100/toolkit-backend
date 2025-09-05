@@ -1,27 +1,21 @@
 const express = require("express");
 const cors = require("cors");
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 const app = express();
 app.use(express.json());
 
 app.use(
   cors({
-    origin: [
-      "https://task-manager-f93cc.web.app", 
-      "http://localhost:5173", 
-    ],
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH']
+    origin: ["https://task-manager-f93cc.web.app", "http://localhost:5173"],
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
   })
 );
-
- 
-
 
 require("dotenv").config();
 const port = process.env.PORT || 4080;
 
-// gemini api 
+// gemini api
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 // mongodb
@@ -47,7 +41,7 @@ async function run() {
 
     // -------------------------------- classes ----------------------------
 
-    // post classes
+    // post classes to db
     app.post("/classes", async (req, res) => {
       const classInfo = req.body;
       const result = await classesCollection.insertOne(classInfo);
@@ -137,6 +131,7 @@ async function run() {
       res.send(result);
     });
 
+    // get all budget information base on email
     app.get("/budget-graph/:email", async (req, res) => {
       const email = req.params.email;
       try {
@@ -187,12 +182,14 @@ async function run() {
     });
 
     // -------------------study planner---------------------
+    // post a plan to db
     app.post("/plan", async (req, res) => {
       const body = req.body;
       const result = await plannerCollection.insertOne(body);
       res.send(result);
     });
 
+    // get study plan by email
     app.get("/plan/:email", async (req, res) => {
       const result = await plannerCollection
         .find({ user: req?.params?.email })
@@ -200,6 +197,7 @@ async function run() {
       res.send(result);
     });
 
+    // update the plan progress
     app.put("/plan", async (req, res) => {
       const { id, value } = req.body;
 
@@ -218,6 +216,14 @@ async function run() {
       res.send(result);
     });
 
+    // delete a completed task
+    app.delete("/task/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await plannerCollection.deleteOne(query);
+      res.send(result);
+    });
+
     // -------------------- Exam Q&A ----------------------
 
     // get all the quiz answer
@@ -227,6 +233,7 @@ async function run() {
       const filter = {};
       if (subject) filter.subject = subject;
       if (difficulty) filter.difficulty = difficulty;
+      
 
       try {
         const result = await quizesCollection.find(filter).toArray();
@@ -236,11 +243,10 @@ async function run() {
       }
     });
 
-
     // quiz generate using Gemini API
-    app.post('/quiz-ai', async(req, res) => {
+    app.post("/quiz-ai", async (req, res) => {
       try {
-        const {subject, difficulty} = req.body; 
+        const { subject, difficulty } = req.body;
 
         // 2.5 flash fee tier
         const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
@@ -252,20 +258,17 @@ async function run() {
         const response = await result.response;
         const text = response.text();
 
-        const cleanedText = text.replace(/```json/g, '').replace(/```/g, '');
+        const cleanedText = text.replace(/```json/g, "").replace(/```/g, "");
         const quizData = JSON.parse(cleanedText);
 
         res.json(quizData);
-
-      }catch(error) {
-        res.send({error: 'Failed to generate quiz!'})
+      } catch (error) {
+        res.send({ error: "Failed to generate quiz!" });
       }
-    })
+    });
 
 
 
-
-     
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
